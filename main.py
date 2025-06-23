@@ -77,8 +77,6 @@ def main():
     cartesian_measurements_scatter = ax.scatter([], [], marker='x', color='green', s=5, label='cartesian_measurements')
     polar_measurements = []
     polar_measurements_scatter = ax.scatter([], [], marker='x', color='pink', s=5, label='polar_measurements')
-    predictions = []
-    predictions_scatter = ax.scatter([], [], marker='x', color='red', s=5, label='prediction')
     ax.set(xlim=[min_x,max_x], ylim=[min_y,max_y], xlabel='x', ylabel='y')
     ax.legend()
 
@@ -105,15 +103,6 @@ def main():
                 polar_measurements.append(polar_measurement)
                 polar_measurements_scatter.set_offsets(np.array(polar_measurements))
                 sensor_data.add(polar_measurements_scatter)
-                if frame > 0:
-                    # Prediction
-                    print(frame)
-                    old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))
-                    print(old_measurement, np.shape(old_measurement))
-                    prediction = sensor.predict()
-                    predictions.append(prediction)
-                    predictions_scatter.set_offsets(np.array(predictions))
-                    sensor_data.add(predictions_scatter)
         return o1_line, s1_pos, sensor_data
 
     anim = animation.FuncAnimation(fig=fig, func=update, frames=FRAMES, interval=MS_PER_PLOT)
