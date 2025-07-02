@@ -111,8 +111,11 @@ def main():
                     old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))
                     print(old_measurement, np.shape(old_measurement))
                     prediction = sensor.predict()
-                    predictions.append(prediction)
-                    predictions_scatter.set_offsets(np.array(predictions))
+                    predictions.append(prediction[0][:2])
+                    covariance = prediction[1]
+                    pred_to_array = np.array(predictions)
+                    print(np.shape(pred_to_array))
+                    predictions_scatter.set_offsets(pred_to_array)
                     sensor_data.add(predictions_scatter)
         return o1_line, s1_pos, sensor_data
 
