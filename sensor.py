@@ -14,7 +14,7 @@ class Sensor():
 
     # other matrices
     x: np.ndarray = None
-    P: np.ndarray = 3* np.eye(2)
+    P: np.ndarray = np.zeros((6,6))
     W: np.ndarray
     S: np.ndarray
     v: np.ndarray
@@ -37,9 +37,9 @@ class Sensor():
         self.F = np.block([[np.eye(2),                  self.time_between_measurements*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.eye(2),                                  self.time_between_measurements*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.zeros_like(np.eye(2)),                   np.eye(2)]])
-        self.D = (self.sigma_k**2)*np.array(((1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)),\
-                                             (1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)),\
-                                             (1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2),            np.eye(2))))
+        self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
+                                             [1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)],\
+                                             [1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2),            np.eye(2)]])
         self.color = color
         if time_between_measure is not None:
             self.time_between_measurements = time_between_measure
