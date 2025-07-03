@@ -108,7 +108,7 @@ def main():
                 if frame > 0:
                     # Prediction
                     print(frame)
-                    old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))
+                    old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))         # -1 because we already added a new measurement this "turn"
                     print(old_measurement, np.shape(old_measurement))
                     prediction = sensor.predict()
                     predictions.append(prediction[0][:2])
@@ -117,6 +117,7 @@ def main():
                     print(np.shape(pred_to_array))
                     predictions_scatter.set_offsets(pred_to_array)
                     sensor_data.add(predictions_scatter)
+                    sensor.filter(old_measurement)
         return o1_line, s1_pos, sensor_data
 
     anim = animation.FuncAnimation(fig=fig, func=update, frames=FRAMES, interval=MS_PER_PLOT)
