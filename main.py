@@ -43,7 +43,7 @@ def main():
     y_dot_dot = r_dot_dot[:,1] = -q*np.sin(2*omega*t)
     acceleration: np.ndarray = np.linalg.norm(r_dot_dot, axis=1)
 
-    x_k: np.ndarray = np.array([x,y,x_dot,y_dot,x_dot_dot,y_dot_dot]).T
+    x_k: np.ndarray = np.array([x,y,x_dot,y_dot,x_dot_dot,y_dot_dot]).T        # shape: (6,1)
     print(x_k)
     print(np.shape(x_k))
 
