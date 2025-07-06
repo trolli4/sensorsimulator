@@ -9,7 +9,7 @@ import random
 from sensor import Sensor
 
 FRAMES = 1000
-MS_PER_PLOT = 200
+MS_PER_PLOT = 1000
 COLORS = cm.get_cmap('tab20b', FRAMES)
 STD_DEVS = 3
 
@@ -162,7 +162,7 @@ def main():
 
             if frame % sensor.time_between_measurements == 0:
                 # Measurement
-                current_state = x_k[frame,:]
+                current_state = x_k[frame-3,:]        # no idea why, but subtracting this value works bests
                 # Cartesian measurement
                 cartesian_measurement = sensor.measure_cartesian(current_state)
                 cartesian_measurements.append(cartesian_measurement)
