@@ -14,7 +14,15 @@ class Sensor():
 
     # other matrices
     x: np.ndarray = None
-    P: np.ndarray = 1e3 * np.eye(6)
+    P: np.ndarray = np.diag([
+        1e2,  # pos_x uncertainty
+        1e2,  # pos_y uncertainty
+        1e1,  # vel_x uncertainty
+        1e1,  # vel_y uncertainty
+        1e0,  # acc_x uncertainty
+        1e0   # acc_y uncertainty
+    ])
+
     W: np.ndarray
     S: np.ndarray
     v: np.ndarray
@@ -31,9 +39,7 @@ class Sensor():
     def __init__(self, color, time_between_measure = 5):
         self.position = np.array((0,0))
         # self.set_position()
-        self.H = np.zeros((2, 6))                                       # H = (I,O,O)
-        self.H[0, 0] = 1
-        self.H[1, 1] = 1
+        self.H = np.array(((1,0,1,0,1,0), (0,1,0,1,0,1)))
         self.R = (self.sigma_c ** 2) * np.eye(2)
         self.F = np.block([[np.eye(2),                  self.time_between_measurements*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.eye(2),                                  self.time_between_measurements*np.eye(2)],\
@@ -47,7 +53,11 @@ class Sensor():
             [np.eye(2)]
         ])
         self.D = q * G @ G.T
+        print("D:", self.D)
 
+        self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
+                                             [1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)],\
+                                                [1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2), np.eye(2)]])
         self.color = color
         if time_between_measure is not None:
             self.time_between_measurements = time_between_measure
@@ -72,8 +82,8 @@ class Sensor():
         return (azimuth, range)
 
     def predict(self):
-        print("F:", np.shape(self.F))
-        print("P:", np.shape(self.P))
+        print("F:", np.shape(self.F), "\n", self.F)
+        print("P:", np.shape(self.P), "\n", self.P)
         print("x:", np.shape(self.x))
         self.x = self.F @ self.x                                            # x[k|k-1]
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
