@@ -17,10 +17,10 @@ class Sensor():
 
     # State vector size: 6 (px, py, vx, vy, ax, ay)
     P = np.zeros((6,6))
-
+    I = np.eye(P.shape[0])
     # Position covariance (px, py), set some uncertainty and correlation
     pos_var = 40.0
-    pos_cov = 30.0  # correlation between x and y
+    pos_cov = 40.0  # correlation between x and y
     P[0,0] = pos_var
     P[1,1] = pos_var
     P[0,1] = pos_cov
@@ -28,14 +28,14 @@ class Sensor():
 
     # Velocity covariance (vx, vy)
     vel_var = 4.0
-    vel_cov = 3.0
+    vel_cov = 4.0
     P[2,2] = vel_var
     P[3,3] = vel_var
     P[2,3] = vel_cov
     P[3,2] = vel_cov
 
     # Acceleration covariance (ax, ay)
-    acc_var = 2.0
+    acc_var = 1.5
     acc_cov = 1.5
     P[4,4] = acc_var
     P[5,5] = acc_var
@@ -48,7 +48,7 @@ class Sensor():
 
     sigma_c = 50
     sigma_r = 20
-    sigma_phi = 0.2                                                     # degree
+    sigma_phi = 0.04                                                     # degree
     sigma_k = 0.1
 
     name: str
@@ -57,25 +57,25 @@ class Sensor():
 
     def __init__(self, color, time_between_measure = 5):
         self.position = np.array((0,0))
-        # self.set_position()
+        self.set_position()
         self.H = np.array(((1,0,1,0,1,0), (0,1,0,1,0,1)))
         self.R = (self.sigma_c ** 2) * np.eye(2)
         self.F = np.block([[np.eye(2),                  self.time_between_measurements*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.eye(2),                                  self.time_between_measurements*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.zeros_like(np.eye(2)),                   np.eye(2)]])
         
-        """ dt = self.time_between_measurements
+        dt = self.time_between_measurements
         q = self.sigma_k**2
         G = np.block([
             [0.5*dt**2*np.eye(2)],
             [dt*np.eye(2)],
             [np.eye(2)]
         ])
-        self.D = q * G @ G.T """
+        self.D = q * G @ G.T
 
-        self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
+        """ self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                                              [1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)],\
-                                                [1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2), np.eye(2)]])
+                                             [1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2), np.eye(2)]]) """
         self.color = color
         if time_between_measure is not None:
             self.time_between_measurements = time_between_measure
@@ -100,10 +100,11 @@ class Sensor():
         return (azimuth, range)
 
     def predict(self):
-        print("currently used state:", self.x[:2])
+        # print("currently used state:", self.x[:2])
         self.x = self.F @ self.x                                            # x[k|k-1]
         print("P before predict:", self.P[:2,:2])
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
+        self.P = 0.5 * (self.P + self.P.T)
         print("P after predict:", self.P[:2,:2])
         return (self.x, self.P)
     
@@ -115,5 +116,14 @@ class Sensor():
         self.W = self.P @ self.H.T @ np.linalg.inv(self.S)                   # W[k|k-1]
         # print("self.W:", self.W)
 
+        print("Symmetry error in P:", np.linalg.norm(self.P - self.P.T))
+
+        try:
+            np.linalg.cholesky(self.W @ self.S @ self.W.T)
+            print("WSWᵀ is positive definite")
+        except np.linalg.LinAlgError:
+            print("WSWᵀ is not positive definite")
+
         self.P = self.P - self.W @ self.S @ self.W.T
+        self.P = 0.5 * (self.P + self.P.T)
         self.x = self.x + self.W @ self.v                                   # x[k|k]

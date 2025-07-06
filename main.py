@@ -126,7 +126,6 @@ def main():
 
     # Update function - does all the calculations
     def update(frame):
-        print("update called with frame:", frame)
         # Object movement
         o1_x_plot = x[:frame]                      # all values until 
         o1_y_plot = y[:frame]                      # current frame
@@ -169,7 +168,6 @@ def main():
                 cartesian_measurements.append(cartesian_measurement)
                 cartesian_measurements_scatter.set_offsets(np.array(cartesian_measurements))
                 sensor_data.add(cartesian_measurements_scatter)
-                print("turn", frame, ", measurement:", cartesian_measurement)
                 # Polar measurement
                 polar_return = sensor.measure_polar(current_state)
                 polar_measurement = polar_return[0][0]*np.array((np.cos(polar_return[0][1]),np.sin(polar_return[0][1]))) + polar_return[1]
@@ -178,7 +176,7 @@ def main():
                 sensor_data.add(polar_measurements_scatter)
                 
                 # Filtering
-                new_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                new_measurement = np.array((polar_measurements[int(frame/sensor.time_between_measurements)]))
                 sensor.filter(new_measurement)
         return o1_line, s1_pos, sensor_data
 
