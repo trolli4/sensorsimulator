@@ -13,7 +13,7 @@ class Sensor():
     D: np.ndarray = np.ndarray((2,2))
 
     # other matrices
-    x: np.ndarray = None
+    x: np.ndarray = np.zeros((6, 1)).flatten()
     P: np.ndarray = np.diag([
         1e2,  # pos_x uncertainty
         1e2,  # pos_y uncertainty
@@ -22,7 +22,7 @@ class Sensor():
         1e0,  # acc_x uncertainty
         1e0   # acc_y uncertainty
     ])
-    P = np.zeros((6,6))
+    # P = np.zeros((6,6))
 
     W: np.ndarray
     S: np.ndarray
@@ -46,15 +46,14 @@ class Sensor():
                            [np.zeros_like(np.eye(2)),   np.eye(2),                                  self.time_between_measurements*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.zeros_like(np.eye(2)),                   np.eye(2)]])
         
-        dt = self.time_between_measurements
+        """ dt = self.time_between_measurements
         q = self.sigma_k**2
         G = np.block([
             [0.5*dt**2*np.eye(2)],
             [dt*np.eye(2)],
             [np.eye(2)]
         ])
-        self.D = q * G @ G.T
-        print("D:", self.D)
+        self.D = q * G @ G.T """
 
         self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                                              [1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)],\
@@ -83,18 +82,18 @@ class Sensor():
         return (azimuth, range)
 
     def predict(self):
-        print("F:", np.shape(self.F), "\n", self.F)
-        print("P:", np.shape(self.P), "\n", self.P)
-        print("x:", np.shape(self.x))
+        print("currently used state:", self.H@self.x)
         self.x = self.F @ self.x                                            # x[k|k-1]
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
-        prediction = np.random.multivariate_normal(self.x, self.P)
         return (self.x, self.P)
     
     def filter(self, measurement):
         self.v = measurement - self.H @ self.x                               # v[k|k-1]
+        # print("self.v:", self.v)
         self.S = self.H @ self.P @ self.H.T + self.R                        # S[k|k-1]
+        # print("self.S:", self.S)
         self.W = self.P @ self.H.T @ np.linalg.inv(self.S)                   # W[k|k-1]
+        # print("self.W:", self.W)
 
         self.P = self.P - self.W @ self.S @ self.W.T
         self.x = self.x + self.W @ self.v                                   # x[k|k]

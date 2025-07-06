@@ -11,6 +11,7 @@ from sensor import Sensor
 FRAMES = 1000
 MS_PER_PLOT = 200
 COLORS = cm.get_cmap('tab20b', FRAMES)
+INIT_RUN = True
 
 import matplotlib.patches as patches
 
@@ -77,12 +78,9 @@ def main():
     acceleration: np.ndarray = np.linalg.norm(r_dot_dot, axis=1)
 
     x_k: np.ndarray = np.array([x,y,x_dot,y_dot,x_dot_dot,y_dot_dot]).T        # shape: (6,1)
-    print(x_k)
-    print(np.shape(x_k))
 
     # Main
     # Sensor Init
-    print(np.shape(np.eye(2))==np.shape(np.zeros_like(np.eye(2))))
     s1 = Sensor(color='red')
     sensors.add(s1)
     r_s = s1.get_position()
@@ -115,8 +113,20 @@ def main():
     ax.set(xlim=[min_x,max_x], ylim=[min_y,max_y], xlabel='x', ylabel='y')
     ax.legend()
 
+    def init():
+        o1_line.set_data([], [])
+        cartesian_measurements_scatter.set_offsets(np.empty((0, 2)))
+        polar_measurements_scatter.set_offsets(np.empty((0, 2)))
+        predictions_scatter.set_offsets(np.empty((0, 2)))
+        # If s1_pos is an artist that needs to be reset, do it here as well, e.g.:
+        # s1_pos.set_offsets([])
+        
+        # Return all artists that will be updated
+        return o1_line, s1_pos, cartesian_measurements_scatter, polar_measurements_scatter, predictions_scatter
+
     # Update function - does all the calculations
     def update(frame):
+        print("update called with frame:", frame)
         # Object movement
         o1_x_plot = x[:frame]                      # all values until 
         o1_y_plot = y[:frame]                      # current frame
@@ -127,14 +137,13 @@ def main():
         for sensor in sensors:
             # Prediction
             if frame > 0:
-                old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                # print(cartesian_measurements)
                 prediction = sensor.predict()
                 predictions.append(prediction[0][:2])
                 covariance = prediction[1]
                 positional_cov = covariance[:2,:2]
-                print("covariance:", np.shape(covariance), "\n", positional_cov)
+                # print("covariance:", np.shape(covariance), "\n", positional_cov)
                 pred_to_array = np.array(predictions)
-                print(np.shape(pred_to_array))
                 predictions_scatter.set_offsets(pred_to_array)
                 sensor_data.add(predictions_scatter)
 
@@ -160,6 +169,7 @@ def main():
                 cartesian_measurements.append(cartesian_measurement)
                 cartesian_measurements_scatter.set_offsets(np.array(cartesian_measurements))
                 sensor_data.add(cartesian_measurements_scatter)
+                print("turn", frame, ", measurement:", cartesian_measurement)
                 # Polar measurement
                 polar_return = sensor.measure_polar(current_state)
                 polar_measurement = polar_return[0][0]*np.array((np.cos(polar_return[0][1]),np.sin(polar_return[0][1]))) + polar_return[1]
@@ -172,7 +182,7 @@ def main():
                 sensor.filter(new_measurement)
         return o1_line, s1_pos, sensor_data
 
-    anim = animation.FuncAnimation(fig=fig, func=update, frames=FRAMES, interval=MS_PER_PLOT)
+    anim = animation.FuncAnimation(fig=fig, func=update, init_func=init, frames=FRAMES, interval=MS_PER_PLOT)
     plt.show()
 
 if __name__ == '__main__': main()
