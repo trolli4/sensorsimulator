@@ -92,7 +92,21 @@ def main():
 
         sensor_data = set()
         for sensor in sensors:
+            # Prediction
+            if frame > 0:
+                old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                prediction = sensor.predict()
+                predictions.append(prediction[0][:2])
+                covariance = prediction[1]
+                positional_cov = covariance[:2,:2]
+                print("covariance:", np.shape(covariance), "\n", positional_cov)
+                pred_to_array = np.array(predictions)
+                print(np.shape(pred_to_array))
+                predictions_scatter.set_offsets(pred_to_array)
+                sensor_data.add(predictions_scatter)
+
             if frame % sensor.time_between_measurements == 0:
+                # Measurement
                 current_state = x_k[frame,:]
                 # Cartesian measurement
                 cartesian_measurement = sensor.measure_cartesian(current_state)
@@ -105,20 +119,10 @@ def main():
                 polar_measurements.append(polar_measurement)
                 polar_measurements_scatter.set_offsets(np.array(polar_measurements))
                 sensor_data.add(polar_measurements_scatter)
-                if frame > 0:
-                    # Prediction
-                    old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))         # -1 because we already added a new measurement this "turn"
-                    print(old_measurement, np.shape(old_measurement))
-                    prediction = sensor.predict()
-                    predictions.append(prediction[0][:2])
-                    covariance = prediction[1]
-                    positional_cov = covariance[:2,:2]
-                    print("covariance:", np.shape(covariance), "\n", positional_cov)
-                    pred_to_array = np.array(predictions)
-                    print(np.shape(pred_to_array))
-                    predictions_scatter.set_offsets(pred_to_array)
-                    sensor_data.add(predictions_scatter)
-                    sensor.filter(old_measurement)
+                
+                # Filtering
+                new_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                sensor.filter(new_measurement)
         return o1_line, s1_pos, sensor_data
 
     anim = animation.FuncAnimation(fig=fig, func=update, frames=FRAMES, interval=MS_PER_PLOT)

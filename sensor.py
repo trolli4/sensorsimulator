@@ -22,6 +22,7 @@ class Sensor():
         1e0,  # acc_x uncertainty
         1e0   # acc_y uncertainty
     ])
+    P = np.zeros((6,6))
 
     W: np.ndarray
     S: np.ndarray
@@ -88,7 +89,7 @@ class Sensor():
         self.x = self.F @ self.x                                            # x[k|k-1]
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
         prediction = np.random.multivariate_normal(self.x, self.P)
-        return (prediction, self.P)
+        return (self.x, self.P)
     
     def filter(self, measurement):
         self.v = measurement - self.H @ self.x                               # v[k|k-1]
