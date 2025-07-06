@@ -17,7 +17,6 @@ class Sensor():
 
     # State vector size: 6 (px, py, vx, vy, ax, ay)
     P = np.zeros((6,6))
-    I = np.eye(P.shape[0])
     # Position covariance (px, py), set some uncertainty and correlation
     pos_var = 40.0
     pos_cov = 40.0  # correlation between x and y
@@ -48,7 +47,7 @@ class Sensor():
 
     sigma_c = 50
     sigma_r = 20
-    sigma_phi = 0.04                                                     # degree
+    sigma_phi = 0.1                                                     # degree
     sigma_k = 0.1
 
     name: str
@@ -100,12 +99,9 @@ class Sensor():
         return (azimuth, range)
 
     def predict(self):
-        # print("currently used state:", self.x[:2])
         self.x = self.F @ self.x                                            # x[k|k-1]
-        print("P before predict:", self.P[:2,:2])
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
         self.P = 0.5 * (self.P + self.P.T)
-        print("P after predict:", self.P[:2,:2])
         return (self.x, self.P)
     
     def filter(self, measurement):
@@ -115,14 +111,6 @@ class Sensor():
         # print("self.S:", self.S)
         self.W = self.P @ self.H.T @ np.linalg.inv(self.S)                   # W[k|k-1]
         # print("self.W:", self.W)
-
-        print("Symmetry error in P:", np.linalg.norm(self.P - self.P.T))
-
-        try:
-            np.linalg.cholesky(self.W @ self.S @ self.W.T)
-            print("WSWᵀ is positive definite")
-        except np.linalg.LinAlgError:
-            print("WSWᵀ is not positive definite")
 
         self.P = self.P - self.W @ self.S @ self.W.T
         self.P = 0.5 * (self.P + self.P.T)

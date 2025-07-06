@@ -9,13 +9,13 @@ import random
 from sensor import Sensor
 
 FRAMES = 1000
-MS_PER_PLOT = 20
+MS_PER_PLOT = 200
 COLORS = cm.get_cmap('tab20b', FRAMES)
-INIT_RUN = True
+STD_DEVS = 3
 
 import matplotlib.patches as patches
 
-def plot_covariance_ellipse(position, covariance, ax, n_std=2.0, **kwargs):
+def plot_covariance_ellipse(position, covariance, ax, n_std=STD_DEVS, **kwargs):
     """
     Add a covariance ellipse to the given axis.
 
@@ -100,7 +100,7 @@ def main():
     max_y = np.max(y) + buffer_y
 
     s1_pos = ax.plot(r_s[0], r_s[1], 'ro', label = 'sensor1')                       
-    o1_pos = ax.plot(0, 0, color='orange', label='object1')
+    # o1_pos = ax.plot(0, 0, color='orange', label='object1')
 
     # Trajectory
     o1_line = ax.plot(x[0], y[0], label='object1 trace')[0]           # object 1
@@ -155,7 +155,7 @@ def main():
                     position=prediction[0][:2],
                     covariance=positional_cov,
                     ax=ax,
-                    n_std=2,
+                    n_std=STD_DEVS,
                     edgecolor='red',
                     facecolor='none',
                     linewidth=1.5)
@@ -176,7 +176,7 @@ def main():
                 sensor_data.add(polar_measurements_scatter)
                 
                 # Filtering
-                new_measurement = np.array((polar_measurements[int(frame/sensor.time_between_measurements)]))
+                new_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
                 sensor.filter(new_measurement)
         return o1_line, s1_pos, sensor_data
 
