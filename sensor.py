@@ -14,7 +14,7 @@ class Sensor():
 
     # other matrices
     x: np.ndarray = None
-    P: np.ndarray = np.zeros((6,6))
+    P: np.ndarray = 1e3 * np.eye(6)
     W: np.ndarray
     S: np.ndarray
     v: np.ndarray
@@ -22,24 +22,32 @@ class Sensor():
     sigma_c = 50
     sigma_r = 20
     sigma_phi = 0.2                                                     # degree
-    sigma_k = 5
+    sigma_k = 0.3
 
     name: str
     color: str
     time_between_measurements: int = 5
 
-    def __init__(self, color, time_between_measure = None):
-        self.set_position()
+    def __init__(self, color, time_between_measure = 5):
+        self.position = np.array((0,0))
+        # self.set_position()
         self.H = np.zeros((2, 6))                                       # H = (I,O,O)
         self.H[0, 0] = 1
         self.H[1, 1] = 1
-        self.R = self.sigma_c * np.array((np.random.normal(), np.random.normal()))
+        self.R = (self.sigma_c ** 2) * np.eye(2)
         self.F = np.block([[np.eye(2),                  self.time_between_measurements*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.eye(2),                                  self.time_between_measurements*np.eye(2)],\
                            [np.zeros_like(np.eye(2)),   np.zeros_like(np.eye(2)),                   np.eye(2)]])
-        self.D = (self.sigma_k**2)*np.block([[1/4*(self.time_between_measurements**4)*np.eye(2), 1/2*(self.time_between_measurements**3)*np.eye(2),   1/2*(self.time_between_measurements**2)*np.eye(2)],\
-                                             [1/2*(self.time_between_measurements**3)*np.eye(2), (self.time_between_measurements**2)*np.eye(2),       self.time_between_measurements*np.eye(2)],\
-                                             [1/2*(self.time_between_measurements**2)*np.eye(2), self.time_between_measurements*np.eye(2),            np.eye(2)]])
+        
+        dt = self.time_between_measurements
+        q = self.sigma_k**2
+        G = np.block([
+            [0.5*dt**2*np.eye(2)],
+            [dt*np.eye(2)],
+            [np.eye(2)]
+        ])
+        self.D = q * G @ G.T
+
         self.color = color
         if time_between_measure is not None:
             self.time_between_measurements = time_between_measure

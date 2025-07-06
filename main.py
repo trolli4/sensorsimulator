@@ -8,7 +8,7 @@ import random
 from sensor import Sensor
 
 FRAMES = 1000
-MS_PER_PLOT = 20
+MS_PER_PLOT = 200
 COLORS = cm.get_cmap('tab20b', FRAMES)
 
 def main():
@@ -107,12 +107,13 @@ def main():
                 sensor_data.add(polar_measurements_scatter)
                 if frame > 0:
                     # Prediction
-                    print(frame)
                     old_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements-1)]))         # -1 because we already added a new measurement this "turn"
                     print(old_measurement, np.shape(old_measurement))
                     prediction = sensor.predict()
                     predictions.append(prediction[0][:2])
                     covariance = prediction[1]
+                    positional_cov = covariance[:2,:2]
+                    print("covariance:", np.shape(covariance), "\n", positional_cov)
                     pred_to_array = np.array(predictions)
                     print(np.shape(pred_to_array))
                     predictions_scatter.set_offsets(pred_to_array)
