@@ -9,7 +9,7 @@ import random
 from sensor import Sensor
 
 FRAMES = 1000
-MS_PER_PLOT = 200
+MS_PER_PLOT = 20
 COLORS = cm.get_cmap('tab20b', FRAMES)
 INIT_RUN = True
 

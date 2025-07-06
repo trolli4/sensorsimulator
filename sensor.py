@@ -14,15 +14,33 @@ class Sensor():
 
     # other matrices
     x: np.ndarray = np.zeros((6, 1)).flatten()
-    P: np.ndarray = np.diag([
-        1e2,  # pos_x uncertainty
-        1e2,  # pos_y uncertainty
-        1e1,  # vel_x uncertainty
-        1e1,  # vel_y uncertainty
-        1e0,  # acc_x uncertainty
-        1e0   # acc_y uncertainty
-    ])
-    # P = np.zeros((6,6))
+
+    # State vector size: 6 (px, py, vx, vy, ax, ay)
+    P = np.zeros((6,6))
+
+    # Position covariance (px, py), set some uncertainty and correlation
+    pos_var = 40.0
+    pos_cov = 30.0  # correlation between x and y
+    P[0,0] = pos_var
+    P[1,1] = pos_var
+    P[0,1] = pos_cov
+    P[1,0] = pos_cov
+
+    # Velocity covariance (vx, vy)
+    vel_var = 4.0
+    vel_cov = 3.0
+    P[2,2] = vel_var
+    P[3,3] = vel_var
+    P[2,3] = vel_cov
+    P[3,2] = vel_cov
+
+    # Acceleration covariance (ax, ay)
+    acc_var = 2.0
+    acc_cov = 1.5
+    P[4,4] = acc_var
+    P[5,5] = acc_var
+    P[4,5] = acc_cov
+    P[5,4] = acc_cov
 
     W: np.ndarray
     S: np.ndarray
@@ -31,7 +49,7 @@ class Sensor():
     sigma_c = 50
     sigma_r = 20
     sigma_phi = 0.2                                                     # degree
-    sigma_k = 0.3
+    sigma_k = 0.1
 
     name: str
     color: str
@@ -82,9 +100,11 @@ class Sensor():
         return (azimuth, range)
 
     def predict(self):
-        print("currently used state:", self.H@self.x)
+        print("currently used state:", self.x[:2])
         self.x = self.F @ self.x                                            # x[k|k-1]
+        print("P before predict:", self.P[:2,:2])
         self.P = self.F @ self.P @ self.F.T + self.D                        # P[k|k-1]
+        print("P after predict:", self.P[:2,:2])
         return (self.x, self.P)
     
     def filter(self, measurement):
