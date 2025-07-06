@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
+import matplotlib.patches as patches
 import numpy as np
 import random
 #from . import sensor
@@ -10,6 +11,38 @@ from sensor import Sensor
 FRAMES = 1000
 MS_PER_PLOT = 200
 COLORS = cm.get_cmap('tab20b', FRAMES)
+
+import matplotlib.patches as patches
+
+def plot_covariance_ellipse(position, covariance, ax, n_std=2.0, **kwargs):
+    """
+    Add a covariance ellipse to the given axis.
+
+    - position: center of the ellipse (x, y)
+    - covariance: 2x2 covariance matrix
+    - ax: matplotlib Axes
+    - n_std: number of standard deviations (2 = ~95% confidence)
+    - kwargs: extra arguments for ellipse (e.g., alpha, edgecolor)
+    """
+    from matplotlib.transforms import Affine2D
+
+    if covariance.shape != (2, 2):
+        raise ValueError("Covariance matrix must be 2x2")
+
+    eigenvals, eigenvecs = np.linalg.eigh(covariance)
+
+    # Sort eigenvalues (and corresponding vectors) largest first
+    order = eigenvals.argsort()[::-1]
+    eigenvals, eigenvecs = eigenvals[order], eigenvecs[:, order]
+
+    # Compute angle from largest eigenvector
+    angle = np.degrees(np.arctan2(*eigenvecs[:, 0][::-1]))
+
+    # Width and height of ellipse = 2 * sqrt(eigenvalue) * n_std
+    width, height = 2 * n_std * np.sqrt(eigenvals)
+
+    ellipse = patches.Ellipse(xy=position, width=width, height=height, angle=angle, **kwargs)
+    ax.add_patch(ellipse)
 
 def main():
     targets = set()                                 # set of targets
@@ -104,6 +137,20 @@ def main():
                 print(np.shape(pred_to_array))
                 predictions_scatter.set_offsets(pred_to_array)
                 sensor_data.add(predictions_scatter)
+
+                # Plot covariance ellipse for current prediction
+                # Clear old ellipses if necessary
+                for e in ax.patches[:]:
+                    e.remove()
+
+                plot_covariance_ellipse(
+                    position=prediction[0][:2],
+                    covariance=positional_cov,
+                    ax=ax,
+                    n_std=2,
+                    edgecolor='red',
+                    facecolor='none',
+                    linewidth=1.5)
 
             if frame % sensor.time_between_measurements == 0:
                 # Measurement
