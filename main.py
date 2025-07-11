@@ -9,7 +9,7 @@ import random
 from sensor import Sensor
 
 FRAMES = 1000
-MS_PER_PLOT = 1000
+MS_PER_PLOT = 20
 COLORS = cm.get_cmap('tab20b', FRAMES)
 STD_DEVS = 3
 
@@ -107,9 +107,9 @@ def main():
     cartesian_measurements = []
     cartesian_measurements_scatter = ax.scatter([], [], marker='x', color='green', s=5, label='cartesian_measurements')
     polar_measurements = []
-    polar_measurements_scatter = ax.scatter([], [], marker='x', color='pink', s=5, label='polar_measurements')
+    polar_measurements_scatter = ax.scatter([], [], marker='x', color='red', s=5, label='polar_measurements')
     predictions = []
-    predictions_scatter = ax.scatter([], [], marker='x', color='red', s=5, label='prediction')
+    predictions_scatter = ax.scatter([], [], marker='x', color='pink', s=5, label='prediction')
     ax.set(xlim=[min_x,max_x], ylim=[min_y,max_y], xlabel='x', ylabel='y')
     ax.legend()
 
@@ -176,7 +176,8 @@ def main():
                 sensor_data.add(polar_measurements_scatter)
                 
                 # Filtering
-                new_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                # new_measurement = np.array((cartesian_measurements[int(frame/sensor.time_between_measurements)]))
+                new_measurement = np.array((polar_measurements[int(frame/sensor.time_between_measurements)]))
                 sensor.filter(new_measurement)
         return o1_line, s1_pos, sensor_data
 

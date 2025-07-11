@@ -45,9 +45,9 @@ class Sensor():
     S: np.ndarray
     v: np.ndarray
 
-    sigma_c = 50
-    sigma_r = 20
-    sigma_phi = 0.1                                                     # degree
+    sigma_c = 100
+    sigma_r = 15
+    sigma_phi = 0.2                                                     # degree
     sigma_k = 0.1
 
     name: str
@@ -96,6 +96,7 @@ class Sensor():
         object_state = self.H@object_state
         azimuth = np.array((np.linalg.norm((self.position-object_state)), np.arctan2(object_state[1]-self.position[1], object_state[0]-self.position[0]))) + (np.array((self.sigma_r*np.random.normal(), self.sigma_phi*np.random.normal())))       # (y_k - y_s) / (x_k - x_s)
         range = (object_state-self.position)
+        range = (object_state-self.position) / ((object_state-self.position)/10000) + self.position - 10000
         return (azimuth, range)
 
     def predict(self):
